@@ -4,19 +4,19 @@ The idea: give an AI agent a small but real LLM training setup and let it experi
 
 ## How it works
 
-The repo has three files that matter. To run an experiment, fork this repo, squash history to a single root commit, run `prepare.py`, then let agents loose. Agents modify `train.py` and push experiment branches/commits to the fork
+The repo has three files that matter. To run an overnight series of experiments, fork this repo, squash history to a single root commit, run `prepare.py`, then let agents loose. Agents modify `train.py` and push experiment branches/commits to the fork.
 
 - **`prepare.py`** — fixed constants, one-time data prep (downloads training data, trains a BPE tokenizer), and runtime utilities (dataloader, evaluation). Not modified.
 - **`train.py`** — the single file the agent edits. Contains the full GPT model, optimizer (Muon + AdamW), and training loop. Everything is fair game: architecture, hyperparameters, optimizer, batch size, etc. **This file is edited and iterated on by the agent**.
-- **`program.md`** — baseline instructions for one agent. **This file is edited and iterated on by the human**. Template for `AGENTS.md`
-- **`AGENTS.md`**/**`CLAUDE.md`** - Before overnight run, copy `program.md` into unchecked `AGENTS.md`. Two reasons: `AGENTS.md` is more robust during context compaction. As agent resets git repo `program.md` may be reset to older version, while unchecked `AGENTS.md` stays constant.
+- **`program.md`** — baseline instructions for one agent. **This file is edited and iterated on by the human**.
+
+Before an overnight run, copy `program.md` into a gitignored `CLAUDE.md` (or `AGENTS.md`). This way, when the agent does `git reset --hard` to jump between commits, the instructions file stays constant.
 
 By design, training runs for a **fixed 5-minute time budget** (wall clock, excluding startup/compilation), regardless of the details of your compute. The metric is **val_bpb** (validation bits per byte) — lower is better, and vocab-size-independent so architectural changes are fairly compared.
 
 ## Quick start
 
 ```bash
-
 # 1. Install dependencies
 uv sync
 
@@ -24,38 +24,34 @@ uv sync
 uv run prepare.py
 
 # 3. Manually run a single training experiment (~5 min)
-uv run python -m scratch.train
+uv run train.py
 ```
 
 If the above commands all work ok, your setup is working and you can go into autonomous research mode.
 
 ## Running the agent
 
-Copy `program.md` into `AGENTS.md`/`CLAUDE.md` depending on agent you use.
-
-Simply spin up your Claude/Codex or whatever you want in this repo (and disable all permissions), then you can prompt something like:
+Copy `program.md` into `CLAUDE.md` (or `AGENTS.md` depending on agent). Then spin up your Claude/Codex or whatever you want in this repo (and disable all permissions), and prompt something like:
 
 ```
-Hi have a look at AGENTS.md/CLAUDE.md and let's kick off a new experiment! let's do the setup first.
+Hi have a look at CLAUDE.md and let's kick off a new experiment! let's do the setup first.
 ```
-
-The `AGENTS.md`/`CLAUDE.md` file is essentially a super lightweight "skill".
 
 ## Project structure
 
 ```
-prepare.py        — constants, data prep + runtime utilities (do not modify)
-scratch/train.py  — model, optimizer, training loop (agent modifies this)
-program.md        — agent instructions
-pyproject.toml    — dependencies
+prepare.py      — constants, data prep + runtime utilities (do not modify)
+train.py        — model, optimizer, training loop (agent modifies this)
+program.md      — agent instructions (human iterates on this)
+pyproject.toml  — dependencies
 ```
 
 ## Design choices
 
-- **Single file to modify.** The agent only touches `scratch/train.py`. This keeps the scope manageable and diffs reviewable.
+- **Single file to modify.** The agent only touches `train.py`. This keeps the scope manageable and diffs reviewable.
 - **Fixed time budget.** Training always runs for exactly 5 minutes, regardless of your specific platform. This means you can expect approx 12 experiments/hour and approx 100 experiments while you sleep. There are two upsides of this design decision. First, this makes experiments directly comparable regardless of what the agent changes (model size, batch size, architecture, etc). Second, this means that autoresearch will find the most optimal model for your platform in that time budget. The downside is that your runs (and results) become not comparable to other people running on other compute platforms.
 - **Self-contained.** No external dependencies beyond PyTorch and a few small packages. No distributed training, no complex configs. One GPU, one file, one metric.
 
 ## Platform support
 
-This code currently requires that you have one or more NVIDIA GPU. Currently assmue one agent per GPU, but in principle agent could command multiple GPUs and run parallel experiments in the background. This is something that should be defined in `promgram.md`. On multi-GPU systems be sure to instruct an agent clearly which GPU they should use, so multiple agents on same machine don't interfere between themselves.
+This code currently requires that you have one or more NVIDIA GPUs. Currently assume one agent per GPU, but in principle an agent could command multiple GPUs and run parallel experiments in the background. This is something that should be defined in `program.md`. On multi-GPU systems be sure to instruct an agent clearly which GPU they should use, so multiple agents on the same machine don't interfere with each other.

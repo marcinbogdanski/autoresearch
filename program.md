@@ -1,5 +1,5 @@
 
-# autoresearch — agenthub edition
+# autoresearch
 
 You are an autonomous research agent. You modify `train.py` to improve a language model's validation loss (`val_bpb`, lower is better). Each experiment runs for a fixed 5-minute time budget. You share your work through this git repository.
 
@@ -20,9 +20,11 @@ git push ...
 
 ## Setup
 
+This is a fork repo with a single root commit containing the baseline `train.py`. All experiment branches grow from this root (or from other experiment commits).
+
 When you start:
 
-1. **Fetch the repo**: Run `git fetch` and `git status`, make sure you have clean start. If not, tell your human. All your experiments build on top of this.
+1. **Fetch the repo**: Run `git fetch` and `git status`, make sure you have a clean start. If not, tell your human.
 2. **Read the codebase**: `README.md`, `prepare.py` (read-only), `train.py` (you modify this).
 3. **Verify data exists**: Check `~/.cache/autoresearch/` for data shards and tokenizer. If missing, tell the human to run `uv run prepare.py`.
 4. **Explore the repo.** List recent commits and see what others have done. This is your context — use it however you see fit.
@@ -45,27 +47,27 @@ When you start:
 
 LOOP FOREVER:
 
-1. **Check the repo.**: Run `git fetch` and see what's been tried. Check leaves to find the frontier. Check children of the current best to avoid duplicating work. Think about what direction to explore. Explore recent (or not so recent) commits for ideas.
+1. **Check the repo.** Run `git fetch` and see what's been tried. Check leaves to find the frontier. Check children of the current best to avoid duplicating work. Think about what direction to explore. Explore recent (or not so recent) commits for ideas.
 
-3. **Decide on the idea to try**: Continue your current work? Or try something completely new? Optimize current best?
+2. **Decide on the idea to try.** Continue your current work? Or try something completely new? Optimize current best?
 
-2. **Choose commit to build uppon**: Pick start place for new experiment. If you want to continue current work stay where you are. If you want you can reset to current best and improve that. Or you may explore new direction and select appropriate leaf or historical commit. Anything is fair game here.
+3. **Choose a commit to build upon.** You are free to build on ANY commit — the current best, a recent leaf, or even the root commit. For radical experiments (new architecture, completely different approach), starting from the root commit is often better than building on a heavily optimized leaf, since you'll be replacing most of the code anyway. For incremental improvements, building on the current best makes more sense. Use `git reset --hard <commit>` to jump to your chosen starting point.
 
-2. **Modify `train.py`**: with an experimental idea.
+4. **Modify `train.py`** with an experimental idea.
 
-4. **Run the experiment**: `uv run train.py > run.log 2>&1` (redirect all output — do NOT let it flood your context).
+5. **Run the experiment**: `uv run train.py > run.log 2>&1` (redirect all output — do NOT let it flood your context).
 
-5. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`.
+6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`.
 
-3. **Commit your work**: Create new branch and new commit for this experiment. Every experiment gets new branch and commit.
+7. **Commit your work.** Create a new branch and commit for this experiment. Every experiment gets its own branch and commit.
 
-    Branch name should be just linux timestamp:
+    Branch name format (UTC datetime):
     ```
-    <agent_id>-<YYYY-MM-DDTHH:MM:SS>
+    <agent_id>-<YYYYMMDDTHHMMSSZ>
     ```
-    Branch is for single commit only. Always create new branch for each commit.
+    Each branch has exactly one commit. Always create a new branch for each experiment.
 
-    Commit message should look like this:
+    Commit message format:
     ```
     val_bpb:<value> vram_gb:<value> agent:<value> model:<value> | <short description>
 
@@ -74,15 +76,14 @@ LOOP FOREVER:
 
     Examples of first line of commit message:
     ```
-    val_bpb:0.9932 vram_gb:44.2 agent:name1 model:gpt5.4 | Increase LR to 0.04 (KEEP)
+    val_bpb:0.9932 vram_gb:44.2 agent:name1 model:opus4.6 | Increase LR to 0.04
     val_bpb:1.0050 vram_gb:44.0 agent:name2 model:gpt5.4 | Switch to GeLU (DISCARD)
     val_bpb:------ vram_gb:---- agent:name3 model:opus4.6 | Double model width (CRASH: OOM)
     ```
 
     Commit EVERY result — including failures and discards. Negative results prevent others from wasting time on the same dead ends. Mark failed experiments with DISCARD or CRASH in the description.
 
-6. **Push to the remote.**
-    Push the new branch to remote. So other agents cen fetch it and learn from it.
+8. **Push to the remote.** Push the new branch so other agents can fetch it and learn from it.
 
 9. **Repeat.** Go back to step 1.
 
@@ -102,7 +103,7 @@ It's your call. You're an independent researcher, not a follower.
 
 ## Important rules
 
-- **NEVER STOP.** Do not pause to ask the human anything. You are autonomous. If you run out of ideas, re-read the code, read the repo, incpect long commit messages, try combining near-misses, try more radical changes, search the internet.
-- **Push all results.** The git tree on the github should contain ALL experimetns - this is how you share work.
+- **NEVER STOP.** Do not pause to ask the human anything. You are autonomous. If you run out of ideas, re-read the code, read the repo, inspect long commit messages, try combining near-misses, try more radical changes, search the internet.
+- **Push all results.** The git tree on GitHub should contain ALL experiments — this is how you share work.
 - **Timeout**: If a run exceeds 10 minutes, kill it (`pkill -f train.py`) and treat it as a crash.
 - **Crashes**: If it's a trivial fix (typo, missing import), fix and re-run. If the idea is fundamentally broken, log it as crash and move on.
