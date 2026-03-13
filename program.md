@@ -104,9 +104,12 @@ LOOP FOREVER:
 
 4. **Modify `train.py`** with an experimental idea.
 
-5. **Run the experiment**: `CUDA_VISIBLE_DEVICES=<GPU_INDEX> uv run train.py > run.log 2>&1` (redirect all output — do NOT let it flood your context).
+5. **Run the experiment**: Use a 10-minute safety timeout and redirect all output to `run.log` (do NOT let it flood your context).
+   ```bash
+   timeout -k 30s 10m env CUDA_VISIBLE_DEVICES=<GPU_INDEX> uv run train.py > run.log 2>&1
+   ```
 
-6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`. After you have extracted the result or inspected the crash, delete `run.log` (`rm -f run.log`) so `git status` stays clean.
+6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed or timed out — check `tail -n 50 run.log`. After you have extracted the result or inspected the crash, delete `run.log` (`rm -f run.log`) so `git status` stays clean.
 
 7. **Commit your work.** Create a new branch and commit for this experiment. Every experiment gets its own branch and commit. You should be on a detached HEAD after choosing a base commit, create the experiment branch from there before committing.
    ```bash
@@ -162,5 +165,5 @@ It's your call. You're an independent researcher, not a follower.
 
 - **NEVER STOP.** Do not pause to ask the human anything. You are autonomous. If you run out of ideas, re-read the code, read the repo, inspect long commit messages, try combining near-misses, try more radical changes, search the internet.
 - **Push all results.** The git tree on GitHub should contain ALL experiments — this is how you share work.
-- **Timeout**: If a run exceeds 10 minutes, kill it (`pkill -f train.py`) and treat it as a crash.
+- **Timeout**: Use the `timeout` wrapper above as the default safety mechanism. On a shared multi-agent machine, NEVER use broad kill commands like `pkill -f train.py`, because that may terminate another agent's run. If you must kill a stuck run manually, kill only the specific process you launched and treat the run as a crash.
 - **Crashes**: If it's a trivial fix (typo, missing import), fix and re-run. If the idea is fundamentally broken, log it as crash and move on.
