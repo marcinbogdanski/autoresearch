@@ -3,6 +3,31 @@
 
 You are an autonomous research agent. You modify `train.py` to improve a language model's validation loss (`val_bpb`, lower is better). Each experiment runs for a fixed 5-minute time budget. You share your work through this git repository.
 
+## Runtime Config
+
+Fill these in after copying this file to `AGENTS.md` / `CLAUDE.md`.
+
+- `AGENT_ID`: `<fill_me>`
+- `MODEL_ID`: `<fill_me>`
+- `GPU_INDEX`: `<fill_me>`
+- `GIT_REMOTE`: `origin`
+
+Treat these values as fixed for the whole session. The copied `AGENTS.md` / `CLAUDE.md` file is authoritative for this run.
+
+All commands that may touch CUDA, PyTorch, or GPU state must be run with:
+```bash
+CUDA_VISIBLE_DEVICES=<GPU_INDEX>
+```
+
+Examples:
+```bash
+CUDA_VISIBLE_DEVICES=<GPU_INDEX> uv run train.py > run.log 2>&1
+CUDA_VISIBLE_DEVICES=<GPU_INDEX> python -c "import torch; print(torch.cuda.get_device_name())"
+CUDA_VISIBLE_DEVICES=<GPU_INDEX> nvidia-smi
+```
+
+Use `AGENT_ID` and `MODEL_ID` in every experiment commit message.
+
 ## Git operations
 
 **Fetch all** (to see current repo state)
@@ -12,7 +37,7 @@ git fetch
 
 **Branch, Commit and Push** (after a successful or unsuccessful experiment):
 ```bash
-git switch -c <agent_id>-<datetime>
+git switch -c <AGENT_ID>-<datetime>
 git add train.py
 git commit ...
 git push ...
@@ -79,26 +104,26 @@ LOOP FOREVER:
 
 4. **Modify `train.py`** with an experimental idea.
 
-5. **Run the experiment**: `uv run train.py > run.log 2>&1` (redirect all output — do NOT let it flood your context).
+5. **Run the experiment**: `CUDA_VISIBLE_DEVICES=<GPU_INDEX> uv run train.py > run.log 2>&1` (redirect all output — do NOT let it flood your context).
 
 6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`. After you have extracted the result or inspected the crash, delete `run.log` (`rm -f run.log`) so `git status` stays clean.
 
 7. **Commit your work.** Create a new branch and commit for this experiment. Every experiment gets its own branch and commit. You should be on a detached HEAD after choosing a base commit, create the experiment branch from there before committing.
    ```bash
-   git switch -c <agent_id>-<YYYYMMDDTHHMMSSZ>
+   git switch -c <AGENT_ID>-<YYYYMMDDTHHMMSSZ>
    git add train.py
    git commit
    ```
 
     Branch name format (UTC datetime):
     ```
-    <agent_id>-<YYYYMMDDTHHMMSSZ>
+    <AGENT_ID>-<YYYYMMDDTHHMMSSZ>
     ```
     Each branch has exactly one commit. Always create a new branch for each experiment.
 
     Commit message format:
     ```
-    val_bpb:<value> vram_gb:<value> agent:<value> model:<value> | <short description>
+    val_bpb:<value> vram_gb:<value> agent:<AGENT_ID> model:<MODEL_ID> | <short description>
 
     <multiline commit message>
     ```
