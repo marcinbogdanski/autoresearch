@@ -25,6 +25,10 @@ This is a fork repo with a single root commit containing the baseline `train.py`
 When you start:
 
 1. **Fetch the repo**: Run `git fetch` and `git status`, make sure you have a clean start. If not, tell your human.
+   ```bash
+   git fetch --prune
+   git status --short --branch
+   ```
 2. **Read the codebase**: `README.md`, `prepare.py` (read-only), `train.py` (you modify this).
 3. **Verify data exists**: Check `~/.cache/autoresearch/` for data shards and tokenizer. If missing, tell the human to run `uv run prepare.py`.
 4. **Explore the repo.** List recent commits and see what others have done. This is your context — use it however you see fit.
@@ -48,10 +52,30 @@ When you start:
 LOOP FOREVER:
 
 1. **Check the repo.** Run `git fetch`, inspect recent branches and commit messages, and see what other agents have tried. Look for promising tips to build on, repeated dead ends to avoid, and older commits worth revisiting for a different direction.
+   ```bash
+   git fetch --prune
+
+   # Recent commits: first line + short hash
+   git log --all --format='%s (%h)' -n 30
+
+   # Frontier: branch tips only, sorted by val_bpb in the subject line
+   git for-each-ref refs/remotes/origin --format='%(subject) (%(objectname:short))' \
+     | grep '^val_bpb:' \
+     | sort
+
+   # Direct children of a commit: match on short parent hash
+   git log --all --format='%s (%h) [parents:%p]' | grep -w '<short_hash>'
+
+   # Full description of one commit
+   git show --no-patch --format=fuller <commit>
+   ```
 
 2. **Decide on the idea to try.** Continue your current work? Or try something completely new? Optimize current best?
 
 3. **Choose a commit to build upon.** You are free to build on ANY commit — the current best, a recent tip, or even the root commit. For radical experiments (new architecture, completely different approach), starting from the root commit is often better than building on a heavily optimized tip, since you'll be replacing most of the code anyway. For incremental improvements, building on the current best makes more sense. Use `git switch --detach <commit>` (or `git checkout --detach <commit>`) to jump to your chosen starting point without moving any existing branch.
+   ```bash
+   git switch --detach <commit>
+   ```
 
 4. **Modify `train.py`** with an experimental idea.
 
@@ -60,6 +84,11 @@ LOOP FOREVER:
 6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`. After you have extracted the result or inspected the crash, delete `run.log` (`rm -f run.log`) so `git status` stays clean.
 
 7. **Commit your work.** Create a new branch and commit for this experiment. Every experiment gets its own branch and commit. You should be on a detached HEAD after choosing a base commit, create the experiment branch from there before committing.
+   ```bash
+   git switch -c <agent_id>-<YYYYMMDDTHHMMSSZ>
+   git add train.py
+   git commit
+   ```
 
     Branch name format (UTC datetime):
     ```
@@ -78,12 +107,15 @@ LOOP FOREVER:
     ```
     val_bpb:0.9932 vram_gb:44.2 agent:name1 model:opus4.6 | Increase LR to 0.04
     val_bpb:1.0050 vram_gb:44.0 agent:name2 model:gpt5.4 | Switch to GeLU (DISCARD)
-    val_bpb:------ vram_gb:---- agent:name3 model:opus4.6 | Double model width (CRASH: OOM)
+    val_bpb:x.xxxx vram_gb:x.x agent:name3 model:opus4.6 | Double model width (CRASH: OOM)
     ```
 
-    Commit EVERY result — including failures and discards. Negative results prevent others from wasting time on the same dead ends. Mark failed experiments with DISCARD or CRASH in the description.
+    Commit EVERY result — including failures and discards. Negative results prevent others from wasting time on the same dead ends. Mark failed experiments with DISCARD or CRASH in the description. Use `val_bpb:x.xxxx` when there is no valid score so simple string sorting still places real numeric results first.
 
 8. **Push to the remote.** Push the new branch so other agents can fetch it and learn from it.
+   ```bash
+   git push -u origin HEAD
+   ```
 
 9. **Repeat.** Go back to step 1.
 
