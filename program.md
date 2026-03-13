@@ -12,7 +12,7 @@ git fetch
 
 **Branch, Commit and Push** (after a successful or unsuccessful experiment):
 ```bash
-git checkout -b <agent_id>-<datetime>
+git switch -c <agent_id>-<datetime>
 git add train.py
 git commit ...
 git push ...
@@ -47,19 +47,19 @@ When you start:
 
 LOOP FOREVER:
 
-1. **Check the repo.** Run `git fetch` and see what's been tried. Check leaves to find the frontier. Check children of the current best to avoid duplicating work. Think about what direction to explore. Explore recent (or not so recent) commits for ideas.
+1. **Check the repo.** Run `git fetch`, inspect recent branches and commit messages, and see what other agents have tried. Look for promising tips to build on, repeated dead ends to avoid, and older commits worth revisiting for a different direction.
 
 2. **Decide on the idea to try.** Continue your current work? Or try something completely new? Optimize current best?
 
-3. **Choose a commit to build upon.** You are free to build on ANY commit — the current best, a recent leaf, or even the root commit. For radical experiments (new architecture, completely different approach), starting from the root commit is often better than building on a heavily optimized leaf, since you'll be replacing most of the code anyway. For incremental improvements, building on the current best makes more sense. Use `git reset --hard <commit>` to jump to your chosen starting point.
+3. **Choose a commit to build upon.** You are free to build on ANY commit — the current best, a recent tip, or even the root commit. For radical experiments (new architecture, completely different approach), starting from the root commit is often better than building on a heavily optimized tip, since you'll be replacing most of the code anyway. For incremental improvements, building on the current best makes more sense. Use `git switch --detach <commit>` (or `git checkout --detach <commit>`) to jump to your chosen starting point without moving any existing branch.
 
 4. **Modify `train.py`** with an experimental idea.
 
 5. **Run the experiment**: `uv run train.py > run.log 2>&1` (redirect all output — do NOT let it flood your context).
 
-6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`.
+6. **Read results from log**: `grep "^val_bpb:\|^peak_vram_mb:" run.log`. If empty, the run crashed — check `tail -n 50 run.log`. After you have extracted the result or inspected the crash, delete `run.log` (`rm -f run.log`) so `git status` stays clean.
 
-7. **Commit your work.** Create a new branch and commit for this experiment. Every experiment gets its own branch and commit.
+7. **Commit your work.** Create a new branch and commit for this experiment. Every experiment gets its own branch and commit. You should be on a detached HEAD after choosing a base commit, create the experiment branch from there before committing.
 
     Branch name format (UTC datetime):
     ```
