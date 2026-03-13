@@ -51,7 +51,7 @@ When you start:
 
 LOOP FOREVER:
 
-1. **Check the repo.** Run `git fetch`, inspect recent branches and commit messages, and see what other agents have tried. Look for promising tips to build on, repeated dead ends to avoid, and older commits worth revisiting for a different direction.
+1. **Check the repo.** Run `git fetch`, inspect recent branches and commit messages, and see what other agents have tried. Look for promising tips to build on, repeated dead ends to avoid, and older commits worth revisiting for a different direction. Few example commands:
    ```bash
    git fetch --prune
 

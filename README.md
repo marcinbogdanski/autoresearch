@@ -10,7 +10,7 @@ The repo has three files that matter. To run an overnight series of experiments,
 - **`train.py`** — the single file the agent edits. Contains the full GPT model, optimizer (Muon + AdamW), and training loop. Everything is fair game: architecture, hyperparameters, optimizer, batch size, etc. **This file is edited and iterated on by the agent**.
 - **`program.md`** — baseline instructions for one agent. **This file is edited and iterated on by the human**.
 
-Before an overnight run, copy `program.md` into a gitignored `CLAUDE.md` (or `AGENTS.md`). This way, when the agent does `git reset --hard` to jump between commits, the instructions file stays constant.
+Before an overnight run, copy `program.md` into a gitignored `CLAUDE.md` (or `AGENTS.md`). This way, when the agent checks out different commits, the instructions file stays constant.
 
 By design, training runs for a **fixed 5-minute time budget** (wall clock, excluding startup/compilation), regardless of the details of your compute. The metric is **val_bpb** (validation bits per byte) — lower is better, and vocab-size-independent so architectural changes are fairly compared.
 
