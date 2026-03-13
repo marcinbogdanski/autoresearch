@@ -47,9 +47,11 @@ git push ...
 
 This is a fork repo with a single root commit containing the baseline `train.py`. All experiment branches grow from this root (or from other experiment commits).
 
+Assume other agents may join this repo at any time, even if it currently looks like you are alone. Because of that, fetching is mandatory, not optional.
+
 When you start:
 
-1. **Fetch the repo**: Run `git fetch` and `git status`, make sure you have a clean start. If not, tell your human.
+1. **Fetch the repo FIRST**: Before doing anything else, run `git fetch --prune` and `git status`, and make sure you have a clean start. If not, tell your human.
    ```bash
    git fetch --prune
    git status --short --branch
@@ -74,11 +76,30 @@ When you start:
 
 ## The experiment loop
 
+### One-time baseline
+
+If the repo only has the single root commit and no experiment commits yet, your first experiment should be the baseline.
+
+1. Run `git rev-list --all --count`. If it prints `1`, the repo only has the root commit.
+2. Run `train.py` unchanged once to record the starting score.
+3. Create a new experiment branch and record the result in git.
+4. If `train.py` was intentionally left unchanged, use an empty commit so the baseline result is still recorded:
+   ```bash
+   git switch -c <AGENT_ID>-<YYYYMMDDTHHMMSSZ>
+   git commit --allow-empty
+   ```
+
+After the baseline is recorded, continue with the normal loop below.
+
 LOOP FOREVER:
 
-1. **Check the repo.** Run `git fetch`, inspect recent branches and commit messages, and see what other agents have tried. Look for promising tips to build on, repeated dead ends to avoid, and older commits worth revisiting for a different direction. Few example commands:
+1. **ALWAYS fetch first.** Do NOT assume you are the only active agent. New branches may appear while you are thinking, reading, or running. Before planning the next experiment, run:
    ```bash
    git fetch --prune
+   ```
+
+2. **Explore the repo and decide what to try next.** Inspect recent branches and commit messages and see what other agents have tried. Look for promising tips to build on, repeated dead ends to avoid, and older commits worth revisiting for a different direction. Use that context to decide whether to continue your current line of work, optimize the current best, or try something completely new. Few example commands:
+   ```bash
 
    # Recent commits: first line + short hash
    git log --all --format='%s (%h)' -n 30
@@ -94,8 +115,6 @@ LOOP FOREVER:
    # Full description of one commit
    git show --no-patch --format=fuller <commit>
    ```
-
-2. **Decide on the idea to try.** Continue your current work? Or try something completely new? Optimize current best?
 
 3. **Choose a commit to build upon.** You are free to build on ANY commit — the current best, a recent tip, or even the root commit. For radical experiments (new architecture, completely different approach), starting from the root commit is often better than building on a heavily optimized tip, since you'll be replacing most of the code anyway. For incremental improvements, building on the current best makes more sense. Use `git switch --detach <commit>` (or `git checkout --detach <commit>`) to jump to your chosen starting point without moving any existing branch.
    ```bash
@@ -145,11 +164,13 @@ LOOP FOREVER:
    git push -u origin HEAD
    ```
 
-9. **Repeat.** Go back to step 1.
+9. **Fetch again after each experiment.** Once you push, immediately run `git fetch --prune` before planning the next experiment. Other agents may have joined or pushed while your run was in progress.
+
+10. **Repeat.** Go back to step 1.
 
 ## Coordination with other agents
 
-**After each experiment, fetch and read the repo.** Catch up on what others have been doing. This is like walking into the lab in the morning and reading the whiteboard.
+**After each experiment, fetch and read the repo.** Catch up on what others have been doing. This is like walking into the lab in the morning and reading the whiteboard. Even if the repo looked quiet earlier, assume another agent may have joined later and pushed new work.
 
 Use this information however you see fit. You might:
 - Avoid repeating something that already failed for someone else.
@@ -164,6 +185,7 @@ It's your call. You're an independent researcher, not a follower.
 ## Important rules
 
 - **NEVER STOP.** Do not pause to ask the human anything. You are autonomous. If you run out of ideas, re-read the code, read the repo, inspect long commit messages, try combining near-misses, try more radical changes, search the internet.
+- **ALWAYS FETCH.** Fetch at startup, fetch before choosing each new experiment, and fetch again after every push. Never assume you are the only agent working in the repo.
 - **Push all results.** The git tree on GitHub should contain ALL experiments — this is how you share work.
 - **Timeout**: Use the `timeout` wrapper above as the default safety mechanism. On a shared multi-agent machine, NEVER use broad kill commands like `pkill -f train.py`, because that may terminate another agent's run. If you must kill a stuck run manually, kill only the specific process you launched and treat the run as a crash.
 - **Crashes**: If it's a trivial fix (typo, missing import), fix and re-run. If the idea is fundamentally broken, log it as crash and move on.
